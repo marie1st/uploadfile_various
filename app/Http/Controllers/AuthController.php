@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\User;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -18,6 +19,25 @@ class AuthController extends Controller
      * @param  [string] password_confirmation
      * @return [string] message
      */
+  
+    public function checkVerificationResponse($user) {
+        $user_id = $user->id;
+        $token = encrypt('moph$'.$user_id);
+        if (!$user->email_verified_at) {
+          return response()->json([
+            'message' => 'VERIFY_EMAIL',
+            'user_id' => $user->id,
+            'email' => $user->email,
+            // 'token' => $user->api_token,
+          ], 403);
+        }
+    
+        return response()->json([
+          'user_id' => $user->id,
+          'token' => $token,
+        ]);
+      }
+    
     public function signup(Request $request)
     {
         $request->validate([
@@ -29,7 +49,10 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password)
+            
         ]);
+
+
         $user->save();
         return response()->json([
             'message' => 'Successfully created user!'
@@ -51,26 +74,29 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string',
-            'remember_me' => 'boolean'
         ]);
-        $credentials = request(['email', 'password']);
-        if(!Auth::attempt($credentials))
-            return response()->json([
-                'message' => 'Unauthorized'
-            ], 401);
-        $user = $request->user();
-        $tokenResult = $user->createToken('Personal Access Token');
-        $token = $tokenResult->token;
-        if ($request->remember_me)
-            $token->expires_at = Carbon::now()->addWeeks(1);
-        $token->save();
+        $credentials = $request->only(['email', 'password']);
+        if(Auth::attempt($credentials)) {
+            return $this->CheckVerificationResponse(Auth::user());
+        }
+        //if(!Auth::attempt($credentials))
+        //    return response()->json([
+        //        'message' => 'Unauthorized'
+        //    ], 401);
+        //$user = $request->user();
+        //$tokenResult = $user->createToken('Personal Access Token');
+        //$token = $tokenResult->token;
+        //if ($request->remember_me)
+        //    $token->expires_at = Carbon::now()->addWeeks(1);
+        //$token->save();
         return response()->json([
-            'access_token' => $tokenResult->accessToken,
-            'token_type' => 'Bearer',
-            'expires_at' => Carbon::parse(
-                $tokenResult->token->expires_at
-            )->toDateTimeString()
-        ]);
+            'message' => 'username or password is not correct'
+            //'access_token' => $tokenResult->accessToken,
+            //'token_type' => 'Bearer',
+            //'expires_at' => Carbon::parse(
+            //    $tokenResult->token->expires_at
+            //)->toDateTimeString()
+            ], 403);
     }
   
     /**
