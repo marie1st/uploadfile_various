@@ -23,6 +23,7 @@ class AuthController extends Controller
     public function checkVerificationResponse($user) {
         $user_id = $user->id;
         $token = encrypt('moph$'.$user_id);
+        $token->save();
         if (!$user->email_verified_at) {
           return response()->json([
             'message' => 'VERIFY_EMAIL',
@@ -34,6 +35,7 @@ class AuthController extends Controller
     
         return response()->json([
           'user_id' => $user->id,
+          'token_type' => 'Bearer',
           'token' => $token,
         ]);
       }
@@ -76,27 +78,28 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
         $credentials = $request->only(['email', 'password']);
-        if(Auth::attempt($credentials)) {
-            return $this->CheckVerificationResponse(Auth::user());
-        }
-        //if(!Auth::attempt($credentials))
-        //    return response()->json([
-        //        'message' => 'Unauthorized'
-        //    ], 401);
-        //$user = $request->user();
-        //$tokenResult = $user->createToken('Personal Access Token');
-        //$token = $tokenResult->token;
-        //if ($request->remember_me)
-        //    $token->expires_at = Carbon::now()->addWeeks(1);
-        //$token->save();
+        //if(Auth::attempt($credentials)) {
+            //return $this->CheckVerificationResponse(Auth::user());
+
+        //}
+        if(!Auth::attempt($credentials))
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        $user = $request->user();
+        $tokenResult = $user->createToken('Personal Access Token');
+        $token = $tokenResult->token;
+        if ($request->remember_me)
+            $token->expires_at = Carbon::now()->addWeeks(1);
+        $token->save();
         return response()->json([
-            'message' => 'username or password is not correct'
-            //'access_token' => $tokenResult->accessToken,
-            //'token_type' => 'Bearer',
-            //'expires_at' => Carbon::parse(
-            //    $tokenResult->token->expires_at
-            //)->toDateTimeString()
-            ], 403);
+            'message' => 'Successfully logged in',
+            'access_token' => $tokenResult->accessToken,
+            'token_type' => 'Bearer',
+            'expires_at' => Carbon::parse(
+                $tokenResult->token->expires_at
+            )->toDateTimeString()
+            ], 200);
     }
   
     /**
