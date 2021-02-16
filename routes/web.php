@@ -20,3 +20,5 @@ Route::get('/', function () {
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/uploadtest', [App\Http\Controllers\FileUpload::class, 'index']);
+Route::post('/uploadtest', [App\Http\Controllers\FileUpload::class, 'store']);

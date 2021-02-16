@@ -20,6 +20,8 @@ Route::group([
 ], function () {
     Route::post('login', 'AuthController@login');
     Route::post('signup', 'AuthController@signup');
+    Route::post('uploadtest', 'FileUpload@store');
+    //Route::get('uploadtest', 'FileUpload@index');
   
     Route::group([
       'middleware' => 'auth:api'

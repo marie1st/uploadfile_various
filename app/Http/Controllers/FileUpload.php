@@ -8,11 +8,14 @@ use App\Models\testf;
 
 class FileUpload extends Controller
 {
+    public function index() {
+      return view('uploadtest');
+    }
     public function store(Request $request)
     {
 
      $request -> validate([
-            'email' => 'unique:employees,email,$this->id,id',
+            'email' => 'unique:testf,email,$this->id,id',
             'clinic_file' => 'required|file|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048',
       ]);  
       
@@ -21,7 +24,7 @@ class FileUpload extends Controller
       $filename = time().$uploadedFile->getClientOriginalName();
 
       Storage::disk('local')->putFileAs(
-        'files', new File('/testcenter'));
+        'clinic_files', $uploadedFile, $filename);
 
       $testf = new testf ([
         'email' => $request->email,
